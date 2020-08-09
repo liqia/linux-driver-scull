@@ -8,5 +8,5 @@ default:
 endif
 
 clean:
-	rm -f *.mod.c *.mod.o *.ko *.o *.tmp_versions
+	rm -f *.mod.c *.mod.o *.ko *.o *.tmp_versions *.order *.symvers *mod
 .PHONY:modules clean
