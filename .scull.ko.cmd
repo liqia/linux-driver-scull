@@ -1,0 +1,1 @@
+cmd_/home/gary/Desktop/test/linux_deivice_drivers/cdev_scull/scull.ko := ld -r -m elf_x86_64  -z max-page-size=0x200000  --build-id  -T ./scripts/module-common.lds -o /home/gary/Desktop/test/linux_deivice_drivers/cdev_scull/scull.ko /home/gary/Desktop/test/linux_deivice_drivers/cdev_scull/scull.o /home/gary/Desktop/test/linux_deivice_drivers/cdev_scull/scull.mod.o;  true

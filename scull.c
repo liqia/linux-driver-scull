@@ -3,34 +3,49 @@
 int scull_trim(struct scull_dev *dev){
 	struct scull_qset *next, *dptr;
 	int qset=dev->qset;
+	int i=0;
 	for(dptr=dev->data;dptr;dptr=next){
 		if(dptr->data){
-			for(int i=0;i<qset;i++)
+			for(i=0;i<qset;i++)
 				kfree(dptr->data[i]);
 			kfree(dptr->data);
-			dptr->data=NULL
+			dptr->data=NULL;
 		}
 		next=dptr->next;
 		kfree(dptr);
 	}
 	dev->size=0;
-	dev->quantum=scull_quantum;
-	dev->qset=scull_qset;
+	dev->quantum = 4000;
+	dev->qset = 1000;
 	dev->data=NULL;
 	return 0;
 }
 
 struct scull_qset* scull_follow(struct scull_dev *dev, int item){
 	struct scull_qset *dptr;
+	if(!dev->data){
+		dev->data = kmalloc(sizeof(struct scull_qset),GFP_KERNEL);
+		if(!dev->data)
+			return NULL;
+		memset(dev->data, 0, sizeof(struct scull_qset));
+	}
 	dptr=dev->data;
-	for(nt i=0; i < item; i++){
-		dptr=dptr->next
+	int i=0;
+	for(i=0; i < item; i++){
+		if(!dptr->next){
+			dptr->next = kmalloc(sizeof(struct scull_qset),GFP_KERNEL);
+			if(!dptr->next)
+				return NULL;
+			memset(dptr->next, 0, sizeof(struct scull_qset));
+		}
+		dptr=dptr->next;
 	}
 	return dptr;
 }
 
 
 ssize_t scull_read(struct file *filp, char __user *buff, size_t count, loff_t *f_pos){
+	printk(KERN_NOTICE"scull_read !!");
 	struct scull_dev *dev=filp->private_data;
 	struct scull_qset *dptr;
 	int quantum = dev->quantum, qset = dev->qset;
@@ -72,39 +87,123 @@ ssize_t scull_read(struct file *filp, char __user *buff, size_t count, loff_t *f
   	return retval;
 }
 
-ssize_t scull_write(struct file *filp, char __user *buff, size_t count, loff_t *f_pos){
-	
+ssize_t scull_write(struct file *filp, const char __user *buff, size_t count, loff_t *f_pos){
+	printk(KERN_NOTICE"scull_write !!");
+	struct scull_dev *dev = filp->private_data;
+	struct scull_qset *dptr;
+	int quantum = dev->quantum, qset = dev->qset;
+	int itemsize = quantum * qset;
+	int item, s_pos, q_pos,rest;
+	ssize_t retval = -ENOMEM;
+
+	if(down_interruptible(&dev->sem)){
+		return -ERESTARTSYS;
+	}
+
+	item = (long)*f_pos/itemsize;
+	rest = (long)*f_pos%itemsize;
+	s_pos = rest / quantum;
+	q_pos = rest % quantum;
+
+	dptr = scull_follow(dev, item);
+	if(dptr==NULL)
+		goto out;
+	if(!dptr->data){
+		dptr->data = kmalloc(qset *sizeof(char *),GFP_KERNEL);
+		if(!dptr->data)
+			goto out ;
+		memset(dptr->data, 0, qset*sizeof(char *));
+	}
+	if(!dptr->data[s_pos]){
+		dptr->data[s_pos] = kmalloc(quantum, GFP_KERNEL);
+		if(!dptr->data[s_pos])
+			goto out;
+	}
+	if(count > quantum - q_pos)
+		count = quantum - q_pos;
+	if(copy_from_user(dptr->data[s_pos] + q_pos, buff, count)){
+		retval = -EFAULT;
+		goto out;
+	}
+	*f_pos += count;
+	retval = count;
+
+	if(dev->size < *f_pos)
+		dev->size = *f_pos;
+	out :
+	up(&dev->sem);
+	return retval;
 }
 
-int scull_open(struct innode *inode,struct file *filp){
+int scull_open(struct inode *inode,struct file *filp){
 	struct scull_dev *dev;
 
-	dev = contain_of(inode->i_cdev,struct scull_dev,cdev);
+	dev = container_of(inode->i_cdev,struct scull_dev,cdev);
 	filp->private_data=dev;
 
-	if ((filp->flags&O_ACCMODE)==O_WRONLY)
+	if ((filp->f_flags & O_ACCMODE)==O_WRONLY)
 	{
 		scull_trim(dev);
 	}
-	return 0
+	return 0;
 }
 
 
+static void scull_setup_cdev(struct scull_dev *dev, int index){
+	int err;
+
+	cdev_init(&dev->cdev, &scull_fops);
+	dev->cdev.owner = THIS_MODULE;
+	dev->cdev.ops = &scull_fops;
+	err = cdev_add(&dev->cdev, devno, 1);
+	if(err)
+		printk(KERN_NOTICE "Error %d adding scull%d", err, index);
+}
 
 static int __init scull_init(void){
 	int result;
-	if(scull_mojor){
-		dev=MKDEV(scull_mojor,scull_minor);
-		result=register_chrdev_region(dev,scull_nr_devs,DEV_NAME);
+	if(scull_major){
+		devno=MKDEV(scull_major,scull_minor);
+		result=register_chrdev_region(devno,scull_nr_devs,DEV_NAME);
 	}else{
-		result=alloc_chrdev_region(&dev,scull_minor,scull_nr_devs,DEV_NAME);
-		scull_major=MAJOR(dev);
+		result=alloc_chrdev_region(&devno,scull_minor,scull_nr_devs,DEV_NAME);
 	}
 	if(result<0){
-		printk(KERNRL_WARNING"scull:can't get major %d\n",scull_major);
+		printk( KERN_WARNING "scull:can't get major %d\n",scull_major);
 		return result;
 	}
+
+	scull_major = MAJOR(devno);
+	scull_minor = MINOR(devno);
+	dev = kmalloc(sizeof(struct scull_dev), GFP_KERNEL);
+	if(!dev){
+		printk(KERN_NOTICE "Get memory failed!");
+		return -ENOMEM;
+	}
+	memset(dev, 0, sizeof(struct scull_dev));
+
+	dev->quantum = 4000;
+	dev->qset = 1000;
+
+	sema_init(&dev->sem, 1);
+
+	scull_setup_cdev(dev, 0);
+	printk(KERN_NOTICE "insmode success!%d %d",2,scull_major);
+	return 0;
 }
+
+static void __exit scull_exit(void){
+	if(dev){
+		scull_trim(dev);
+		cdev_del(&dev->cdev);
+		kfree(dev);
+	}
+	unregister_chrdev_region(devno,1);
+	printk(KERN_NOTICE"rmmod success!");
+}
+
 
 module_init(scull_init);
 module_exit(scull_exit);
+
+MODULE_LICENSE("GPL");
