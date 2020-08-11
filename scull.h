@@ -57,6 +57,11 @@ struct file_operations scull_fops={
 };
 
 
+struct file_operations scull_proc_fops={
+	.owner =    THIS_MODULE,
+	.read =     scull_read,
+};
+
 ssize_t scull_proc_read(struct file *file, char __user *ubuff, size_t count, loff_t *ppos);
 
 ssize_t scull_proc_write(struct file *file, const char __user *ubuff, size_t count, loff_t *ppos);

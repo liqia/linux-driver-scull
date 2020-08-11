@@ -47,7 +47,6 @@ struct scull_qset* scull_follow(struct scull_dev *dev, int item){
 
 ssize_t scull_read(struct file *filp, char __user *buff, size_t count, loff_t *f_pos){
 	printk(KERN_NOTICE"scull_read !!");
-	struct scull_dev *dev=filp->private_data;
 	struct scull_qset *dptr;
 	int quantum = dev->quantum, qset = dev->qset;
 	int itemsize = quantum * qset;
@@ -164,7 +163,7 @@ static void scull_setup_cdev(struct scull_dev *dev, int index){
 static int __init scull_init(void){
 	int result;
 
-	ent=proc_create("scull_proc",0660,NULL,&scull_fops);
+	ent=proc_create("scull_proc",0660,NULL,&scull_proc_fops);
 	if(!ent){
 		return -1;
 	}
