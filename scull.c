@@ -44,6 +44,7 @@ struct scull_qset* scull_follow(struct scull_dev *dev, int item){
 }
 
 
+
 ssize_t scull_read(struct file *filp, char __user *buff, size_t count, loff_t *f_pos){
 	printk(KERN_NOTICE"scull_read !!");
 	struct scull_dev *dev=filp->private_data;
@@ -162,6 +163,11 @@ static void scull_setup_cdev(struct scull_dev *dev, int index){
 
 static int __init scull_init(void){
 	int result;
+
+	ent=proc_create("scull_proc",0660,NULL,&scull_fops);
+	if(!ent){
+		return -1;
+	}
 	if(scull_major){
 		devno=MKDEV(scull_major,scull_minor);
 		result=register_chrdev_region(devno,scull_nr_devs,DEV_NAME);
@@ -188,7 +194,7 @@ static int __init scull_init(void){
 	sema_init(&dev->sem, 1);
 
 	scull_setup_cdev(dev, 0);
-	printk(KERN_NOTICE "insmode success!%d %d",2,scull_major);
+	printk(KERN_NOTICE "insmode success!%d %d\n",2,scull_major);
 	return 0;
 }
 
@@ -198,6 +204,7 @@ static void __exit scull_exit(void){
 		cdev_del(&dev->cdev);
 		kfree(dev);
 	}
+	proc_remove(ent);
 	unregister_chrdev_region(devno,1);
 	printk(KERN_NOTICE"rmmod success!");
 }

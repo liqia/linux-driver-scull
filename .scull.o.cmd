@@ -895,6 +895,8 @@ deps_/home/gary/Desktop/test/linux_deivice_drivers/cdev_scull/scull.o := \
   include/linux/percpu-refcount.h \
   include/linux/kasan.h \
     $(wildcard include/config/kasan/generic.h) \
+  include/linux/proc_fs.h \
+    $(wildcard include/config/proc/pid/arch/status.h) \
 
 /home/gary/Desktop/test/linux_deivice_drivers/cdev_scull/scull.o: $(deps_/home/gary/Desktop/test/linux_deivice_drivers/cdev_scull/scull.o)
 

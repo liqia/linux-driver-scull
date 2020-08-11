@@ -6,12 +6,14 @@
 #include <linux/uaccess.h>
 #include <linux/fs.h>
 #include <linux/slab.h>
+#include <linux/proc_fs.h>
 
 #define SCULL_MAJOR 0
 #define DEV_NAME "scull"
 int scull_major=0,scull_minor=0;
 int scull_nr_devs=1;
 dev_t devno=0;
+static struct proc_dir_entry *ent;
 
 struct scull_qset{
 	void **data;
@@ -53,3 +55,8 @@ struct file_operations scull_fops={
 	.open =     scull_open,
 	.release =  scull_release,
 };
+
+
+ssize_t scull_proc_read(struct file *file, char __user *ubuff, size_t count, loff_t *ppos);
+
+ssize_t scull_proc_write(struct file *file, const char __user *ubuff, size_t count, loff_t *ppos);
