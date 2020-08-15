@@ -4,7 +4,6 @@
 #include <linux/version.h>
 #include <linux/types.h>
 #include <linux/uaccess.h>
-#include <linux/fs.h>
 #include <linux/slab.h>
 #include <linux/proc_fs.h>
 #include "scull_ioctl.h"
@@ -50,7 +49,7 @@ ssize_t scull_read(struct file *filp,  char __user *  buff, size_t count, loff_t
 
 ssize_t scull_write(struct file *filp, const char __user *buff, size_t count, loff_t *f_pos);
 
-int scullc_ioctl (struct inode *inode, struct file *filp,unsigned int cmd, unsigned long arg);
+long int scull_ioctl (struct file *filp,unsigned int cmd, unsigned long arg);
 
 struct file_operations scull_fops={
 	.owner =    THIS_MODULE,
@@ -58,7 +57,7 @@ struct file_operations scull_fops={
 	.write =    scull_write,
 	.open =     scull_open,
 	.release =  scull_release,
-	.ioctl =   	scull_ioctl,
+	.unlocked_ioctl =   	scull_ioctl,
 };
 
 

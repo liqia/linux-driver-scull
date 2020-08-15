@@ -822,6 +822,19 @@ deps_/home/gary/Desktop/test/linux_deivice_drivers/cdev_scull/scull.o := \
   arch/x86/include/asm/smap.h \
   arch/x86/include/asm/extable.h \
   arch/x86/include/asm/uaccess_64.h \
+  include/linux/slab.h \
+    $(wildcard include/config/debug/slab.h) \
+    $(wildcard include/config/failslab.h) \
+    $(wildcard include/config/memcg/kmem.h) \
+    $(wildcard include/config/have/hardened/usercopy/allocator.h) \
+    $(wildcard include/config/slab.h) \
+    $(wildcard include/config/slub.h) \
+    $(wildcard include/config/slob.h) \
+  include/linux/percpu-refcount.h \
+  include/linux/kasan.h \
+    $(wildcard include/config/kasan/generic.h) \
+  include/linux/proc_fs.h \
+    $(wildcard include/config/proc/pid/arch/status.h) \
   include/linux/fs.h \
     $(wildcard include/config/read/only/thp/for/fs.h) \
     $(wildcard include/config/fs/posix/acl.h) \
@@ -851,7 +864,6 @@ deps_/home/gary/Desktop/test/linux_deivice_drivers/cdev_scull/scull.o := \
     $(wildcard include/config/have/arch/hash.h) \
   include/linux/path.h \
   include/linux/list_lru.h \
-    $(wildcard include/config/memcg/kmem.h) \
   include/linux/shrinker.h \
   include/linux/capability.h \
   include/uapi/linux/capability.h \
@@ -885,18 +897,7 @@ deps_/home/gary/Desktop/test/linux_deivice_drivers/cdev_scull/scull.o := \
   include/linux/projid.h \
   include/uapi/linux/quota.h \
   include/linux/nfs_fs_i.h \
-  include/linux/slab.h \
-    $(wildcard include/config/debug/slab.h) \
-    $(wildcard include/config/failslab.h) \
-    $(wildcard include/config/have/hardened/usercopy/allocator.h) \
-    $(wildcard include/config/slab.h) \
-    $(wildcard include/config/slub.h) \
-    $(wildcard include/config/slob.h) \
-  include/linux/percpu-refcount.h \
-  include/linux/kasan.h \
-    $(wildcard include/config/kasan/generic.h) \
-  include/linux/proc_fs.h \
-    $(wildcard include/config/proc/pid/arch/status.h) \
+  /home/gary/Desktop/test/linux_deivice_drivers/cdev_scull/scull_ioctl.h \
 
 /home/gary/Desktop/test/linux_deivice_drivers/cdev_scull/scull.o: $(deps_/home/gary/Desktop/test/linux_deivice_drivers/cdev_scull/scull.o)
 
