@@ -43,7 +43,37 @@ struct scull_qset* scull_follow(struct scull_dev *dev, int item){
 	return dptr;
 }
 
+int scullc_ioctl (struct inode *inode, struct file *filp,unsigned int cmd, unsigned long arg){
+	int err = 0, tmp=0;
+	int retval = 0;
 
+	if(_IOC_TYPR(cmd) != SCULL_IOC_MAGIC) return -ENOTTY;
+	if(_IOC_NR(cmd) > SCULL_IOC_MAXNR) return -ENOTTY;
+
+	//_IOC_READ means that user want to get data from device. So the device will write data to the ptr. We need to varify the write access
+	if(_IOC_DIR(cmd) & _IOC_READ)
+		err = !access_ok(VERIFY_WRITE, (void __user *)arg, _IOC_SIZE(cmd));
+	else if(_IOC_DIR(cmd) & IOC_WRITE){
+		err = !access_ok(VERIFY_READ, (void __user *)arg, _IOC_SIZE(cmd));
+	}
+	if(err)
+		return -EFAULT;
+
+	switch(cmd){
+		case SCULL_IOCSQUANTUM:
+			if(!capable(CAP_SYS_ADMIN))
+				return -EPERM;
+			retval = __get_user(tmp, (int __user *)arg);
+			printk("SCULL_IOCSQUANTUM:%d\n",tmp);
+			break;
+		case SCULL_IOCGQUANTUM:
+			retval=__put_user(scull_quantum, (int __user *)arg);
+			break;
+		default:
+			return -ENOTTY;
+	}
+	return retval;
+}
 
 ssize_t scull_read(struct file *filp, char __user *buff, size_t count, loff_t *f_pos){
 	printk(KERN_NOTICE"scull_read !!");

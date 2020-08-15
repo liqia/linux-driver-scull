@@ -7,11 +7,13 @@
 #include <linux/fs.h>
 #include <linux/slab.h>
 #include <linux/proc_fs.h>
+#include "scull_ioctl.h"
 
 #define SCULL_MAJOR 0
 #define DEV_NAME "scull"
 int scull_major=0,scull_minor=0;
 int scull_nr_devs=1;
+int scull_quantum=999;
 dev_t devno=0;
 static struct proc_dir_entry *ent;
 
@@ -48,12 +50,15 @@ ssize_t scull_read(struct file *filp,  char __user *  buff, size_t count, loff_t
 
 ssize_t scull_write(struct file *filp, const char __user *buff, size_t count, loff_t *f_pos);
 
+int scullc_ioctl (struct inode *inode, struct file *filp,unsigned int cmd, unsigned long arg);
+
 struct file_operations scull_fops={
 	.owner =    THIS_MODULE,
 	.read =     scull_read,
 	.write =    scull_write,
 	.open =     scull_open,
 	.release =  scull_release,
+	.ioctl =   	scull_ioctl,
 };
 
 
